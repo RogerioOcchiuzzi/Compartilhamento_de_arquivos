@@ -17,8 +17,8 @@ public class Tcc {
      */
     public static void main(String[] args) {
         
-        new Grupos();
-                       
+        new Grupos().run();
+     
     }
     
 }

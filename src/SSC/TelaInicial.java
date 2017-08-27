@@ -5,16 +5,23 @@
  */
 package SSC;
 
+import java.awt.Desktop;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+import static sun.security.jgss.GSSUtil.login;
 
 
 /**
@@ -31,13 +38,51 @@ public class TelaInicial extends javax.swing.JFrame {
     private List diretorioGrupo = new List();
     private List diretorioGrupoRaiz = new List();
     private boolean criarNovosGrupos = false;
+    public ArrayList<NovoTab> listaTabs ;
+    private Cliente cliente;
+    private ArquivoConfig arquivoConfig;
+    private Blockchain blockchain;
+    private java.util.List<Cliente> listaCliente;
+    private String formatoHora = "HH:mm";
             
     public TelaInicial() {
         initComponents();
         
+        listaTabs = new ArrayList();
         
         lerArquivos = new LerArquivos();
+        
+        arquivoConfig = new ArquivoConfig();
+        arquivoConfig.setTelaInicial(this);
+        arquivoConfig.iniciarPrograma();
+        
+        blockchain = new Blockchain();
+        blockchain.setTelaInicial(this);
+        
+        manipulaArquivoConfig();
+        
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(TelaInicial.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(TelaInicial.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(TelaInicial.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedLookAndFeelException ex) {
+            Logger.getLogger(TelaInicial.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
     
+    public void setCliente(Cliente cl) {
+        cliente = cl;
+    }
+    
+    public void setListaClientes(java.util.List<Cliente> lc){
+        
+        listaCliente = lc;
+        
     }
 
     public void setDiretorioGrupo(List diretorioGrupo) {
@@ -52,12 +97,79 @@ public class TelaInicial extends javax.swing.JFrame {
         this.criarNovosGrupos = criarNovosGrupos;
     }
     
+    public void manipulaArquivoConfig(){
+        
+        if(!verificaCadastro()){
+            
+            forcaCadastro();
+            
+        }
+        
+    }
+    
+    public void adicionaLog(String texto){
+        
+        String textoLog = jTextPane3.getText();
+        
+      // if(!jTextPane3.getText().contains(texto) || texto.contains("!")){
+            
+            java.util.Date agora = new java.util.Date();
+            SimpleDateFormat formata = new SimpleDateFormat();
+            formata = new SimpleDateFormat(formatoHora);
+            String horaAtual = formata.format(agora);
+            //System.out.println(dataAtual+" " + horaAtual);
+            
+            jTextPane3.setText(textoLog + "\n" + horaAtual + " - " + texto);
+            
+        //}
+        
+    }
+    
+    public boolean verificaCadastro(){
+        
+        java.util.List<String> textoAuxiliar  = new ArrayList<String>();
+        
+        textoAuxiliar = arquivoConfig.lerArquivo();
+        
+        boolean temCadastro = true;
+        
+        for(int i = 0; i < textoAuxiliar.size(); i++){
+            
+            if((textoAuxiliar.get(i).contains("Nome:") && textoAuxiliar.get(i).length() == "Nome:".length()) 
+                    || (textoAuxiliar.get(i).contains("CPF:") && textoAuxiliar.get(i).length() == "CPF:".length()) ){
+                
+                temCadastro = false;
+                
+            }
+            
+        }
+        
+        return temCadastro;
+    }
+    
+    public void forcaCadastro(){
+        
+        //System.out.println("SSC.TelaInicial.forcaCadastro() nao tem cadastro");
+        
+        jDialog4.setVisible(true);
+        jDialog4.setAlwaysOnTop(true);
+        
+    }
+    
+    public void adicionaCadastroArquivoConfig(String nome, String cpf){
+        
+        arquivoConfig.adicionaOuMudaCadastro(nome, cpf);
+        
+    }
+    
     /**
      * esse metodo adiquire os diretorios na pasta raiz tcc
      * e cria tabs com eles
      *
      * @param diretoriosTcc */
     public void tabsGrupoInicial(ArrayList diretoriosTcc){
+        
+        java.util.List<String> nomesTabs = new ArrayList<String>();
         
         int percorreLista = 0;
         
@@ -68,10 +180,16 @@ public class TelaInicial extends javax.swing.JFrame {
             } catch (IOException ex) {
                 Logger.getLogger(TelaInicial.class.getName()).log(Level.SEVERE, null, ex);
             }
+            
+            nomesTabs.add(listaTabs.get(percorreLista).getNomeNovoTab());
               
             percorreLista++; 
             
         }
+        
+        //aqui verifica se existemc os blockchains
+        blockchain.verificaECria(nomesTabs);
+        
     }
     
     /**
@@ -83,11 +201,16 @@ public class TelaInicial extends javax.swing.JFrame {
         NovoTab novoT = new NovoTab();
         
         novoT.setJDialog5(jDialog5);
+        novoT.setJDialog6(jDialog6);
+        novoT.setTextoBlockchain(jTextPane2);
         novoT.setJTabbedPane1(jTabbedPane1);
         novoT.setDiretorioGrupo(diretorioGrupo);
         novoT.setDiretorioGrupoRaiz(diretorioGrupoRaiz);
         novoT.setCriarNovosGrupos(criarNovosGrupos);
+        novoT.setListaClientes(listaCliente);
         novoT.criarTab(nomeTab, arquivosDentroPasta);
+        
+        listaTabs.add(novoT);
             
     }
 
@@ -126,10 +249,17 @@ public class TelaInicial extends javax.swing.JFrame {
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
+        jDialog6 = new javax.swing.JDialog();
+        jButton9 = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTextPane2 = new javax.swing.JTextPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jTextPane1 = new javax.swing.JTextPane();
         jLabel1 = new javax.swing.JLabel();
         jButton4 = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jLabel2 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jTextPane3 = new javax.swing.JTextPane();
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
@@ -285,6 +415,7 @@ public class TelaInicial extends javax.swing.JFrame {
                 .addContainerGap(74, Short.MAX_VALUE))
         );
 
+        jDialog4.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         jDialog4.setTitle("Fazer cadastro");
         jDialog4.setLocation(new java.awt.Point(250, 150));
         jDialog4.setMinimumSize(new java.awt.Dimension(320, 300));
@@ -343,6 +474,7 @@ public class TelaInicial extends javax.swing.JFrame {
         jLabel10.setText("Você É/Não  é o adiministrador do grupo");
 
         jButton8.setText("Fechar");
+        jButton8.setFocusPainted(false);
         jButton8.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton8ActionPerformed(evt);
@@ -387,31 +519,82 @@ public class TelaInicial extends javax.swing.JFrame {
                 .addComponent(jLabel14)
                 .addGap(37, 37, 37)
                 .addComponent(jButton8)
-                .addContainerGap(40, Short.MAX_VALUE))
+                .addContainerGap(41, Short.MAX_VALUE))
         );
 
+        jDialog6.setTitle("Blockchain");
+        jDialog6.setLocation(new java.awt.Point(250, 150));
+        jDialog6.setMinimumSize(new java.awt.Dimension(506, 565));
+        jDialog6.setResizable(false);
+
+        jButton9.setText("Fechar");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
+
+        jScrollPane2.setViewportView(jTextPane2);
+
+        javax.swing.GroupLayout jDialog6Layout = new javax.swing.GroupLayout(jDialog6.getContentPane());
+        jDialog6.getContentPane().setLayout(jDialog6Layout);
+        jDialog6Layout.setHorizontalGroup(
+            jDialog6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jDialog6Layout.createSequentialGroup()
+                .addContainerGap(415, Short.MAX_VALUE)
+                .addComponent(jButton9)
+                .addGap(26, 26, 26))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jDialog6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2)
+                .addContainerGap())
+        );
+        jDialog6Layout.setVerticalGroup(
+            jDialog6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jDialog6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jButton9)
+                .addContainerGap())
+        );
+
+        jScrollPane1.setViewportView(jTextPane1);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("TCC");
+        setTitle("Secure Shared Cloud");
+        setBackground(new java.awt.Color(255, 255, 255));
         setLocation(new java.awt.Point(200, 100));
+        setMaximumSize(new java.awt.Dimension(2352, 4394));
+        setMinimumSize(new java.awt.Dimension(577, 740));
+        setResizable(false);
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 36)); // NOI18N
         jLabel1.setText("grupos ativos");
 
         jButton4.setText("Criar novo grupo");
+        jButton4.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        jButton4.setFocusPainted(false);
         jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton4ActionPerformed(evt);
             }
         });
 
+        jTabbedPane1.setBackground(new java.awt.Color(255, 255, 255));
         jTabbedPane1.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
         jTabbedPane1.setToolTipText("");
+        jTabbedPane1.setOpaque(true);
 
-        jLabel2.setText("<html>\n<h3>tela inicial</h3>\n<h3>esta tela estara sempre ativa</h3>\n<p>aqui ficarão textos de ajuda ao usuario</p>\n<p>Lembrar o usuario de fazer cadastro</p>");
-        jLabel2.setVerticalAlignment(javax.swing.SwingConstants.TOP);
-        jTabbedPane1.addTab("pagina inicial", jLabel2);
+        jTextPane3.setEditable(false);
+        jTextPane3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jTextPane3.setText("Secure Shared Cloud log:\n");
+        jScrollPane3.setViewportView(jTextPane3);
+
+        jTabbedPane1.addTab("Log", jScrollPane3);
 
         jButton6.setText("Deletar grupo");
+        jButton6.setFocusPainted(false);
         jButton6.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton6ActionPerformed(evt);
@@ -419,14 +602,21 @@ public class TelaInicial extends javax.swing.JFrame {
         });
 
         jButton7.setText("Entrar em um grupo");
+        jButton7.setFocusPainted(false);
         jButton7.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton7ActionPerformed(evt);
             }
         });
 
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        jLabel3.setText("estatísticas download: xxbps / upload: xxbps");
+        jLabel3.setBackground(new java.awt.Color(255, 255, 153));
+        jLabel3.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setText("Offline");
+        jLabel3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jLabel3.setOpaque(true);
+
+        jMenuBar1.setBackground(new java.awt.Color(255, 255, 255));
 
         jMenu1.setText("arquivo");
 
@@ -451,6 +641,11 @@ public class TelaInicial extends javax.swing.JFrame {
         jMenu2.setText("ajuda");
 
         jMenuItem5.setText("pagina official do projeto");
+        jMenuItem5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem5ActionPerformed(evt);
+            }
+        });
         jMenu2.add(jMenuItem5);
 
         jMenuBar1.add(jMenu2);
@@ -464,31 +659,37 @@ public class TelaInicial extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton4))
-                    .addComponent(jLabel1)
                     .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 545, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jButton7)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jButton4))
+                            .addComponent(jLabel1))
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton7)
-                    .addComponent(jButton6)
-                    .addComponent(jButton4))
-                .addGap(5, 5, 5)
-                .addComponent(jLabel1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jButton7)
+                            .addComponent(jButton6)
+                            .addComponent(jButton4))
+                        .addGap(5, 5, 5)
+                        .addComponent(jLabel1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel3)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 580, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -514,12 +715,23 @@ public class TelaInicial extends javax.swing.JFrame {
         lerArquivos.criaGrupo(jTextField1.getText());
         String[] preencher = {};
         novoTab(jTextField1.getText(), preencher);
-                
+        
+        blockchain.criaNovoParaGrupo(jTextField1.getText());
+        
         jDialog1.setVisible(false);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        // TODO add your handling code here:
+        
+        //aqui permite que o programa crtie novos grupos
+        criarNovosGrupos = true;
+        
+        lerArquivos.criaGrupo(jTextField2.getText());
+        String[] preencher = {};
+        novoTab(jTextField2.getText(), preencher);
+        
+        blockchain.criaNovoParaGrupo(jTextField2.getText());
+        
         jDialog2.setVisible(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -593,9 +805,17 @@ public class TelaInicial extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem1ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        // TODO add your handling code here:
+       
+        String textoNome = jTextField5.getText();
+        String textoCPF = jTextField6.getText();
         
-        jDialog4.setVisible(false);
+        if(!textoNome.isEmpty() && !textoCPF.isEmpty()){
+            
+            adicionaCadastroArquivoConfig(textoNome, textoCPF);
+        
+            jDialog4.setVisible(false);
+            
+        }
         
     }//GEN-LAST:event_jButton5ActionPerformed
 
@@ -606,6 +826,28 @@ public class TelaInicial extends javax.swing.JFrame {
         
     }//GEN-LAST:event_jButton8ActionPerformed
 
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+
+                
+        jDialog6.setVisible(false);
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton9ActionPerformed
+
+    private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
+
+                if(Desktop.isDesktopSupported())
+        {
+                    try {
+                        Desktop.getDesktop().browse(new URI("https://github.com/RogerioOcchiuzzi/SSC"));
+                    } catch (URISyntaxException ex) {
+                        Logger.getLogger(Grupos.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (IOException ex) {
+                        Logger.getLogger(Grupos.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+        }
+                
+    }//GEN-LAST:event_jMenuItem5ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -615,19 +857,20 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
+    private javax.swing.JButton jButton9;
     private javax.swing.JDialog jDialog1;
     private javax.swing.JDialog jDialog2;
     private javax.swing.JDialog jDialog3;
     private javax.swing.JDialog jDialog4;
     private javax.swing.JDialog jDialog5;
+    private javax.swing.JDialog jDialog6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
+    public javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -640,12 +883,18 @@ public class TelaInicial extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
+    private javax.swing.JTextPane jTextPane1;
+    private javax.swing.JTextPane jTextPane2;
+    private javax.swing.JTextPane jTextPane3;
     // End of variables declaration//GEN-END:variables
 
 }

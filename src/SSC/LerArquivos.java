@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public class LerArquivos {
     
     private String diretorio = "C:\\";
-    private boolean temTcc = false;
+    //private boolean temTcc = false;
     private ArrayList diretoriosTcc = new ArrayList();
     
     private List diretorioGrupo = new List();
@@ -57,27 +57,33 @@ public class LerArquivos {
 	int i = 0;
 	for (int j = afile.length; i < j; i++) {
 		File arquivos = afile[i];
-		System.out.println(arquivos.getName() + " -- Diretorio: " + 
-                        arquivos.isDirectory() + " -- Arquivo: " + arquivos.isFile() +
-                        " -- oculto: " + arquivos.isHidden());
+//		System.out.println(arquivos.getName() + " -- Diretorio: " + 
+//                        arquivos.isDirectory() + " -- Arquivo: " + arquivos.isFile() +
+//                        " -- oculto: " + arquivos.isHidden());
 	}
 
     }
     
     public void LeOsArquivosPastaTcc() throws IOException {       
     
-            File file = new File(diretorio + "TCC\\");
+            File file = new File(Constantes.PASTA_RAIZ);
+            
             File afile[] = file.listFiles();
             int i = 0;
             for (int j = afile.length; i < j; i++) {
                     File arquivos = afile[i];
-                    System.out.println(arquivos.getName() + " -- Diretorio: " + 
-                            arquivos.isDirectory() + " -- Arquivo: " + arquivos.isFile() +
-                            " -- oculto: " + arquivos.isHidden());
-                    diretoriosTcc.add(arquivos.getName());
+//                    System.out.println(arquivos.getName() + " -- Diretorio: " + 
+//                            arquivos.isDirectory() + " -- Arquivo: " + arquivos.isFile() +
+//                            " -- oculto: " + arquivos.isHidden());
+                    if(arquivos.isDirectory()){
+                        
+                        diretoriosTcc.add(arquivos.getName());
+                        diretorioGrupo.add(Constantes.PASTA_RAIZ + Constantes.BARRA_INVERTIDA + arquivos.getName());
+                        diretorioGrupoRaiz.add(Constantes.PASTA_RAIZ + Constantes.BARRA_INVERTIDA + arquivos.getName());
+                        
+                    }
+
                     
-                    diretorioGrupo.add(diretorio + "TCC\\" + arquivos.getName());
-                    diretorioGrupoRaiz.add(diretorio + "TCC\\" + arquivos.getName());
                                      
             }
             
@@ -92,37 +98,28 @@ public class LerArquivos {
      */
     public String[] LeOsArquivosPastas(String diretorioAtual) throws IOException {         
             
-            File file = new File("C:\\TCC\\" + diretorioAtual);
-            
-        return file.list();
+            File file = new File(Constantes.PASTA_RAIZ + Constantes.BARRA_INVERTIDA + diretorioAtual);
+                   
+            return file.list();
     }
     
  public void criarDiretorioTcc() {     
-     
-     File file = new File(diretorio);
-	File afile[] = file.listFiles();
-	int i = 0;
-	for (int j = afile.length; i < j; i++) {
-		File arquivos = afile[i];
-                
-                if(arquivos.getName().equalsIgnoreCase("TCC") ){
-                    temTcc = true;
-                    System.out.println("ja tem tcc");
-                }
-		
-	}
+
+        File file = new File(Constantes.PASTA_RAIZ);
         
-        if(!temTcc){
-            try {
-            File diretorio = new File("C:\\TCC");
-            diretorio.mkdir();
-            } catch (Exception ex) {
-                System.out.println(ex);
-                System.out.println("Não foi possivel criar o diretorio raiz");
-            }
+        if (!file.exists()) {
             
-            System.out.println("não tem tcc");
-        }     
+            //System.out.println(Constantes.PASTA_RAIZ + " não existia");
+           
+                //let's try to create it
+                file.mkdirs();
+            
+        }else{
+            
+            
+            //System.out.println(Constantes.PASTA_RAIZ + " ja existe");
+            
+        }
         
     }
  
@@ -131,32 +128,16 @@ public class LerArquivos {
   */
  public void criaGrupo(String nomeGrupo){
      
-     File file = new File(diretorio + "TCC");
-	File afile[] = file.listFiles();
-	int i = 0;
-	for (int j = afile.length; i < j; i++) {
-		File arquivos = afile[i];
-                
-                if(arquivos.getName().equalsIgnoreCase(nomeGrupo) ){
-                    temTcc = true;
-                    System.out.println("ja tem diretorio " + nomeGrupo);
-                }
-		
-	}
-        
-        if(!temTcc){
             try {
-            File diretorio = new File("C:\\TCC\\" + nomeGrupo);
-            diretorio.mkdir();
+            File diretorio = new File(Constantes.PASTA_RAIZ + Constantes.BARRA_INVERTIDA + nomeGrupo);
+            diretorio.mkdirs();
             } catch (Exception ex) {
-                System.out.println(ex);
-                System.out.println("Não foi possivel criar o diretorio teste");
+//                System.out.println(ex);
+//                System.out.println("Não foi possivel criar o diretorio teste");
             }
             
-            System.out.println("não tem este grupo");
-        }
-        
-        
+//            System.out.println("não tem este grupo");
+      
  }
  
  // Deleta todos os arquivos e subdiretorios
@@ -168,19 +149,19 @@ public class LerArquivos {
             for (int i=0; i<children.length; i++) { 
                boolean success = deleteDir(new File(dir, children[i]));
                 if (!success) {
-                    System.out.println("não deletou");
+//                    System.out.println("não deletou");
                     return false;
                 }
             }
         }
-        System.out.println("deletou");
+//        System.out.println("deletou");
         // Agora o diretório está vazio, restando apenas deletá-lo.
         return dir.delete();
     }
  
  public void deletarGrupo(String nomeGrupo){
      
-     File diretorio = new File("C:\\TCC\\" + nomeGrupo); 
+     File diretorio = new File(Constantes.PASTA_RAIZ + Constantes.BARRA_INVERTIDA + nomeGrupo); 
      
      deleteDir(diretorio);
      

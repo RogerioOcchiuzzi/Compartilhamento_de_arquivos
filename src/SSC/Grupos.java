@@ -7,21 +7,30 @@ package SSC;
 
 import java.awt.List;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.awt.Desktop;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  *
  * @author roger
  */
-public class Grupos {
+public class Grupos implements Runnable{
     
     
     private List diretorioGrupo = new List();
     private List diretorioGrupoRaiz = new List();
     private boolean criarNovosGrupos = false;
-
-    public Grupos() {
+    private java.util.List<Cliente> listaCliente  = new ArrayList<>(); 
+        
+    @Override
+    public void run() {
         
         LerArquivos lerArquivos = new LerArquivos();
         lerArquivos.setDiretorioGrupo(diretorioGrupo);
@@ -40,6 +49,7 @@ public class Grupos {
         telaInicial.setDiretorioGrupo(diretorioGrupo);
         telaInicial.setDiretorioGrupoRaiz(diretorioGrupoRaiz);
         telaInicial.setCriarNovosGrupos(criarNovosGrupos);
+        telaInicial.setListaClientes(listaCliente);
         /**
          * aqui adiquire os diretorios dentro da pasta tcc
          * e exibe eles como tabs
@@ -47,9 +57,27 @@ public class Grupos {
         if(!lerArquivos.getDiretoriosTcc().isEmpty()){
             telaInicial.tabsGrupoInicial(lerArquivos.getDiretoriosTcc());
         }
+               
+        
+        
+        Servidor servidor = new Servidor();
+        servidor.setListaClientes(listaCliente);
+        servidor.setDiretorioGrupoRaiz(diretorioGrupoRaiz);
+        servidor.setTelaInicial(telaInicial);
+        
+        Cliente cliente = new Cliente();
+        cliente.setListaClientes(listaCliente);
+        cliente.setDiretorioGrupoRaiz(diretorioGrupoRaiz);
+        cliente.setTelaInicial(telaInicial);
         
         telaInicial.setVisible(true);
-        
+
+       Thread threadServidor = new Thread(servidor);
+       Thread threadcliente = new Thread(cliente);
+       
+       threadServidor.start();
+       threadcliente.start();
+               
     }
 
 }
