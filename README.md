@@ -1,4 +1,7 @@
-# SSC (Secure Shared Cloud)
+# Compartilhamento de Arquivos 
+
+# TCC
+Este projeto foi criado para ser apresentado como Trabalho de Conclusão de Curso do curso de Ciências da Computação na faculdade UNIP (Universidade Paulista) Limeira.
 
 # Descrição
 O Secure Shared Cloud é um aplicativo de compartilhamento de arquivos que formam uma nuvem de computadores entre eles, essa nuvem tem foco na proteção legal e tecnológica dos dados do usuário, através de criptografia de chave pública e também de um controle de identificação avançado dos dados que o usuário disponibiliza.
